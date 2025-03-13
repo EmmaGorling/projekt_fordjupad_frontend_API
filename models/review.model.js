@@ -4,7 +4,7 @@ const Mongoose = require("mongoose");
 
 const reviewSchema = new Mongoose.Schema(
     {
-        userId: {
+        user: {
             type: Mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
@@ -13,26 +13,25 @@ const reviewSchema = new Mongoose.Schema(
             type: String,
             required: true
         },
-        text: {
+        reviewText: {
             type: String,
             required: true
         },
         rating: {
             type: Number,
+            min: 1,
+            max: 5,
             required: true
         },
-        createdAt: {
-            type: Date,
-            default: Date.now
-        },
-        likes: {
-            type: Number,
-            default: 0
-        },
-        dislikes: {
-            type: Number,
-            default: 0
-        }
+        likes: [{
+            type: Mongoose.Schema.Types.ObjectId, ref: "User"
+        }],
+        dislikes: [{
+            type: Mongoose.Schema.Types.ObjectId, ref: "User"
+        }]
+    },
+    {
+        timestamps: true
     }
 );
 

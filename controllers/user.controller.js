@@ -72,7 +72,16 @@ exports.updateUser = async (request, h) => {
             return h.response({ message: "Not authorized" }).code(403);
         }
 
-        const updatedUser = await User.findByIdAndUpdate( request.params.id, request.payload, {new: true});
+        // Skapa en kopia av payload
+        let updateData = { ...request.payload };
+
+        // Om lösenord ändras, kryptera det innan uppdatering
+        if (updateData.password) {
+            const saltRounds = 10;
+            updateData.password = await bcrypt.hash(updateData.password, saltRounds);
+        }
+
+        const updatedUser = await User.findByIdAndUpdate( request.params.id, updateData, {new: true});
         return h.response(updatedUser).code(200);
     } catch (error) {
         return h.response({ message: error.message }).code(500);
@@ -97,7 +106,7 @@ exports.deleteUser = async (request, h) => {
         if (userId !== loggedInUserId) {
             return h.response({ message: "Not authorized" }).code(403);
         }
-        
+
         await User.findByIdAndDelete(request.params.id);
         return h.response().code(204);
     } catch (error) {
@@ -152,24 +161,26 @@ exports.logout = async (request, h) => {
 exports.validateToken = async (request, h) => {
     try {
         const token = request.state.jwt;
+        console.log("Token från cookie:", token); // 🔹 Debug-logg
 
-        if(!token) {
-            return h.response({ message: "No token provided"}).code(401);
+        if (!token) {
+            return h.response({ message: "No token provided" }).code(401).takeover();
         }
 
-        // Verify token
-        const decoded = Jwt.token.decode(token);
-        const isValid = Jwt.token.verify(decoded, process.env.JWT_KEY, { algorithms: ['HS256'] });
-
-        if(!isValid) {
-            // Delete cookie if not valid
-            h.unstate('jwt');
-            return h.response({ message: "invalid or expired token"}).code(401);
+        let decoded;
+        try {
+            decoded = Jwt.token.verify(token, process.env.JWT_KEY, { algorithms: ["HS256"] });
+            console.log("Decoded token:", decoded); // 🔹 Debug-logg
+        } catch (error) {
+            console.error("Token verification error:", error); // 🔹 Debug-logg
+            h.unstate("jwt");
+            return h.response({ message: "Invalid or expired token" }).code(401).takeover();
         }
 
-        return h.response({ message: "Token is valid" }).code(200);
+        return h.response({ message: "Token is valid", user: decoded.decoded.payload.user }).code(200);
     } catch (error) {
-        return h.response({ message: "Invalid token" }).code(401);
+        console.error("Unexpected error:", error); // 🔹 Debug-logg
+        return h.response({ message: "Invalid token" }).code(401).takeover();
     }
 }
 
