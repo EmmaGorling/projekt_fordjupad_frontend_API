@@ -161,7 +161,6 @@ exports.logout = async (request, h) => {
 exports.validateToken = async (request, h) => {
     try {
         const token = request.state.jwt;
-        console.log("Received token:", token); // Debug log
         
         if (!token) {
             return h.response({ message: "No token provided" }).code(401);
