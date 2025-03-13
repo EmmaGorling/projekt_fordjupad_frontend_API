@@ -1,6 +1,5 @@
 "use strict"
 
-const { required, string, boolean } = require("joi");
 const Mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 

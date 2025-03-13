@@ -56,9 +56,25 @@ exports.createUser = async (request, h) => {
 // Update user
 exports.updateUser = async (request, h) => {
     try {
+        // Get token from cookies
+        const token = request.state.jwt;
+        if(!token) {
+            return h.response({ message: "No token aviable"}).code(401);
+        }
+
+        // Verify token
+        const decoded = Jwt.token.decode(token);
+        const loggedInUserId = decoded.decoded.payload.user._id;
+
+        const userId = request.params.id;
+
+        if (userId !== loggedInUserId) {
+            return h.response({ message: "Not authorized" }).code(403);
+        }
+
         const updatedUser = await User.findByIdAndUpdate( request.params.id, request.payload, {new: true});
         return h.response(updatedUser).code(200);
-    } catch {
+    } catch (error) {
         return h.response({ message: error.message }).code(500);
     }
 }
@@ -66,6 +82,22 @@ exports.updateUser = async (request, h) => {
 // Delete user
 exports.deleteUser = async (request, h) => {
     try {
+        // Get token from cookies
+        const token = request.state.jwt;
+        if(!token) {
+            return h.response({ message: "No token aviable"}).code(401);
+        }
+
+        // Verify token
+        const decoded = Jwt.token.decode(token);
+        const loggedInUserId = decoded.decoded.payload.user._id;
+
+        const userId = request.params.id;
+
+        if (userId !== loggedInUserId) {
+            return h.response({ message: "Not authorized" }).code(403);
+        }
+        
         await User.findByIdAndDelete(request.params.id);
         return h.response().code(204);
     } catch (error) {
