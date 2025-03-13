@@ -161,26 +161,38 @@ exports.logout = async (request, h) => {
 exports.validateToken = async (request, h) => {
     try {
         const token = request.state.jwt;
-        console.log("Token från cookie:", token); // 🔹 Debug-logg
-
+        console.log("Received token:", token); // Debug log
+        
         if (!token) {
-            return h.response({ message: "No token provided" }).code(401).takeover();
+            return h.response({ message: "No token provided" }).code(401);
         }
 
-        let decoded;
         try {
-            decoded = Jwt.token.verify(token, process.env.JWT_KEY, { algorithms: ["HS256"] });
-            console.log("Decoded token:", decoded); // 🔹 Debug-logg
+            // First decode to see what's in the token
+            const decoded = Jwt.token.decode(token);
+            
+            // Verify token the same way it's done in your auth.js
+            Jwt.token.verify(decoded, {
+                key: process.env.JWT_KEY,
+                algorithms: ['HS256']
+            });
+            
+            // If verification passes, extract the user
+            const user = decoded.decoded.payload.user;
+            
+            return h.response({ 
+                message: "Token is valid", 
+                user: user 
+            }).code(200);
+            
         } catch (error) {
-            console.error("Token verification error:", error); // 🔹 Debug-logg
+            console.error("Token verification error:", error);
             h.unstate("jwt");
-            return h.response({ message: "Invalid or expired token" }).code(401).takeover();
+            return h.response({ message: "Invalid or expired token", error: error.message }).code(401);
         }
-
-        return h.response({ message: "Token is valid", user: decoded.decoded.payload.user }).code(200);
     } catch (error) {
-        console.error("Unexpected error:", error); // 🔹 Debug-logg
-        return h.response({ message: "Invalid token" }).code(401).takeover();
+        console.error("Unexpected error:", error);
+        return h.response({ message: "Invalid token", error: error.message }).code(401);
     }
 }
 
