@@ -1,17 +1,22 @@
 "use strict"
 
 const Mongoose = require("mongoose");
+const User = require('./user.model');
+const { required } = require("joi");
 
 const reviewSchema = new Mongoose.Schema(
     {
         user: {
             type: Mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: User,
             required: true
         },
         bookId: {
             type: String,
             required: true
+        },
+        bookTitle: {
+            type: String
         },
         reviewText: {
             type: String,

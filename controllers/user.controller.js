@@ -13,7 +13,7 @@ exports.getAllUsers = async (request, h) => {
         const users = await User.find({}).select("-password");
         return users;
     } catch (error) {
-        return h.response({message: error.message }).code(500);
+        return h.response({message: "Något gick fel, vänligen försök igen" }).code(500);
     }
 }
 
@@ -28,7 +28,7 @@ exports.getUser = async (request, h) => {
         const result = await User.findOne({ _id: request.params.id}).select("-password");
         return result;
     } catch (error) {
-        return h.response({ message: error.message }).code(500);
+        return h.response({ message: "Något gick fel, vänligen försök igen" }).code(500);
     }
 }
 
@@ -45,11 +45,16 @@ exports.createUser = async (request, h) => {
             lastName
         });
 
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return h.response({ message: "E-postadressen är redan registrerad" }).code(400);
+        }
+
 
         const savedUser = await user.save();
-        return h.response(savedUser).code(200);
+        return h.response({ message: "Kontot har lagts till!", user: savedUser}).code(200);
     } catch (error) {
-        return h.response({ message: error.message }).code(500);
+        return h.response({ message: "Något gick fel, vänligen försök igen" }).code(500);
     }
 }
 
@@ -59,7 +64,7 @@ exports.updateUser = async (request, h) => {
         // Get token from cookies
         const token = request.state.jwt;
         if(!token) {
-            return h.response({ message: "No token aviable"}).code(401);
+            return h.response({ message: "Ingen token tillgänglig"}).code(401);
         }
 
         // Verify token
@@ -69,7 +74,7 @@ exports.updateUser = async (request, h) => {
         const userId = request.params.id;
 
         if (userId !== loggedInUserId) {
-            return h.response({ message: "Not authorized" }).code(403);
+            return h.response({ message: "Åtkomst nekad" }).code(403);
         }
 
         // Skapa en kopia av payload
@@ -82,9 +87,9 @@ exports.updateUser = async (request, h) => {
         }
 
         const updatedUser = await User.findByIdAndUpdate( request.params.id, updateData, {new: true});
-        return h.response(updatedUser).code(200);
+        return h.response({ message: "Användaren har uppdaterats!", user: updatedUser }).code(200);
     } catch (error) {
-        return h.response({ message: error.message }).code(500);
+        return h.response({ message: "Något gick fel, vänligen försök igen" }).code(500);
     }
 }
 
@@ -94,7 +99,7 @@ exports.deleteUser = async (request, h) => {
         // Get token from cookies
         const token = request.state.jwt;
         if(!token) {
-            return h.response({ message: "No token aviable"}).code(401);
+            return h.response({ message: "Ingen token tillgänglig"}).code(401);
         }
 
         // Verify token
@@ -104,13 +109,13 @@ exports.deleteUser = async (request, h) => {
         const userId = request.params.id;
 
         if (userId !== loggedInUserId) {
-            return h.response({ message: "Not authorized" }).code(403);
+            return h.response({ message: "Åtkomst nekad" }).code(403);
         }
 
         await User.findByIdAndDelete(request.params.id);
-        return h.response().code(204);
+        return h.response({ message: "Användaren har raderats"}).code(204);
     } catch (error) {
-        return h.response({ message: error.message }).code(500);
+        return h.response({ message: "Något gick fel, vänligen försök igen" }).code(500);
     }
 }
 
@@ -123,13 +128,13 @@ exports.loginUser = async (request, h) => {
 
         // Check user
         if(!user) {
-            return h.response({ message: "Email or password is incorrect" }).code(401);
+            return h.response({ message: "E-post eller eller lösenord är felaktigt" }).code(401);
         }
 
         // Check password
         const correctPassword = await bcrypt.compare( password, user.password );
         if(!correctPassword) {
-            return h.response({ message: "Email or password is incorrect" }).code(401);
+            return h.response({ message: "E-post eller eller lösenord är felaktigt" }).code(401);
         }
 
         // Get user, no password
@@ -138,10 +143,10 @@ exports.loginUser = async (request, h) => {
         // Generate token
         const token = generateToken(user);
 
-        return h.response({ message: 'You are logged in'}).state('jwt', token);
+        return h.response({ message: 'Du är inloggad', user: user}).state('jwt', token);
 
     } catch (error) {
-        return h.response({ message: error.message }).code(500);
+        return h.response({ message: "Något gick fel, vänligen försök igen" }).code(500);
     }
 }
 
@@ -153,7 +158,7 @@ exports.logout = async (request, h) => {
         
         return h.response().code(204);
     } catch (error) {
-        return h.response({ message: error.message }).code(500);
+        return h.response({ message: "Något gick fel, vänligen försök igen" }).code(500);
     }
 }
 
@@ -163,7 +168,7 @@ exports.validateToken = async (request, h) => {
         const token = request.state.jwt;
         
         if (!token) {
-            return h.response({ message: "No token provided" }).code(401);
+            return h.response({ message: "Ingen token tillgänglig" }).code(401);
         }
 
         try {
@@ -180,18 +185,18 @@ exports.validateToken = async (request, h) => {
             const user = decoded.decoded.payload.user;
             
             return h.response({ 
-                message: "Token is valid", 
+                message: "Token är godkänd", 
                 user: user 
             }).code(200);
             
         } catch (error) {
-            console.error("Token verification error:", error);
+            console.error("Fel vid verifiering:", error);
             h.unstate("jwt");
-            return h.response({ message: "Invalid or expired token", error: error.message }).code(401);
+            return h.response({ message: "Ogiltigt eller gammalt token", error: error.message }).code(401);
         }
     } catch (error) {
-        console.error("Unexpected error:", error);
-        return h.response({ message: "Invalid token", error: error.message }).code(401);
+        console.error("Oväntat fel:", error);
+        return h.response({ message: "Ogiltigt token", error: error.message }).code(401);
     }
 }
 

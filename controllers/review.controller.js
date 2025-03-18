@@ -10,17 +10,18 @@ exports.createReview = async (request, h) => {
 
 
         // Create review
-        const { bookId, reviewText, rating } = request.payload;
+        const { bookId, bookTitle, reviewText, rating } = request.payload;
 
         const newReview = new Review({
             user: loggedInUserId,
             bookId,
+            bookTitle,
             reviewText,
             rating
         });
 
         const savedReview = await newReview.save();
-        return h.response(savedReview).code(201);
+        return h.response({ message: "Din recension har lagts till", review: savedReview }).code(201);
     } catch (error) {
         return h.response({ message: error.message }).code(500);
     }
@@ -36,11 +37,63 @@ exports.getSingleReview = async (request, h) => {
     }
 }
 
+// Update review
+exports.updateReview = async (request, h) => {
+    try {
+
+        const review = await Review.findById(request.params.id);
+        
+        if (!review) {
+            return h.response({ message: "Recensionen hittades inte" }).code(404);
+        }
+
+        const {  reviewText, rating } = request.payload;
+
+        // Uppdatera recensionen
+        if (reviewText) review.reviewText = reviewText;
+        if (rating) review.rating = rating;
+
+        const updatedReview = await review.save();
+
+        return h.response({ message: "Recensionen har uppdaterats", review: updatedReview }).code(200);
+    } catch (error) {
+        console.error(error);
+        return h.response({ message: "Något gick fel vid uppdatering av recensionen" }).code(500);
+    }
+}
+
+// Delete review
+exports.deleteReview = async (request, h) => {
+    try {
+        const loggedInUserId = validateUserToken(request, h);
+
+        
+        const review = await Review.findById(request.params.id);
+
+        
+        if (!review) {
+            return h.response({ message: "Recensionen hittades inte" }).code(404);
+        }
+
+        if (review.user.toString() !== loggedInUserId.toString()) {
+            return h.response({ message: "Du har inte rätt att ta bort denna recension" }).code(403);
+        }
+
+        await Review.findByIdAndDelete(review._id);
+
+        return h.response({ message: "Recensionen har raderats" }).code(200);
+    } catch (error) {
+        console.error('Error during review deletion:', error);
+        return h.response({ message: "Något gick fel vid radering av recensionen", error: error.message }).code(500);
+    }
+};
+
 // Get reviews by book
 exports.getReviewsByBook = async (request, h) => {
     try {
         const reviews = await Review.find({ bookId: request.params.bookId })
-            .populate("user", "firstName lastName");
+            .populate("user", "_id firstName lastName")
+            .sort({createdAt: -1});
 
             return h.response(reviews).code(200);
     } catch (error) {
@@ -53,7 +106,23 @@ exports.getReviewsByUser = async (request, h) => {
     try {
         const userId = request.params.id;
 
-        const reviews = await Review.find({ user: userId });
+        const reviews = await Review.find({ user: userId })
+            .populate("user", "_id firstName lastName")
+            .sort({createdAt: -1});
+
+        return h.response(reviews).code(200);
+    } catch (error) {
+        return h.response({ message: error.message }).code(500);
+    }
+}
+
+// Get top reviews
+exports.getTopReviews = async (request, h) => {
+    try {
+        const reviews = await Review.find({ rating: 5 })
+            .sort({ createdAt: -1})
+            .limit(10)
+            .populate( "user", "firstName lastName");
 
         return h.response(reviews).code(200);
     } catch (error) {

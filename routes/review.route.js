@@ -16,21 +16,53 @@ module.exports = (server) => {
     server.route({
         method: 'GET',
         path: '/reviews/{id}',
-        handler: reviewController.getSingleReview
+        handler: reviewController.getSingleReview,
+        options: {
+            auth: false
+        }
     })
+
+    // Update review
+    server.route({
+        method: 'PUT',
+        path: '/reviews/{id}',
+        handler: reviewController.updateReview
+    })
+
+    // Delete review
+    server.route({
+        method: 'DELETE',
+        path: '/reviews/{id}',
+        handler: reviewController.deleteReview
+    });
 
     // Get reviews by book
     server.route({
         method: 'GET',
         path: '/reviews/book/{bookId}',
-        handler: reviewController.getReviewsByBook
+        handler: reviewController.getReviewsByBook,
+        options: {
+            auth: false
+        }
     });
 
+    // Get top reviews
+    server.route({
+        method: 'GET',
+        path: '/reviews/top',
+        handler: reviewController.getTopReviews,
+        options: {
+            auth: false
+        }
+    })
     // Get reviews from user
     server.route({
         method: 'GET',
         path: '/users/{id}/reviews',
-        handler: reviewController.getReviewsByUser
+        handler: reviewController.getReviewsByUser,
+        options: {
+            auth: false
+        }
     })
 
     // Like
