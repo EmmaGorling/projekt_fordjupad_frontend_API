@@ -11,7 +11,7 @@ const init = async () => {
     // Initialize server
     const server = Hapi.server({
         port: process.env.PORT || 3001,
-        host: "localhost",
+        host: "0.0.0.0",
         routes: {
             cors: {
                 origin: ["https://emad2301-projekt-react.netlify.app", "https://www.thunderclient.com", "http.//localhost:5500", "http://127.0.0.1:5500", "http://localhost:5173"],
