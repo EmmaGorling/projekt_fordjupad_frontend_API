@@ -32,7 +32,7 @@ module.exports = (server) => {
                     email: Joi.string().email().required(),
                     firstName: Joi.string().min(2).required(),
                     lastName: Joi.string().min(2).required(),
-                    password: Joi.string(6).required()
+                    password: Joi.string().min(6).required()
                 }),
                 failAction: (request, h, err) => {
                     return h.response({ message: err.details[0].message}).code(400).takeover();
