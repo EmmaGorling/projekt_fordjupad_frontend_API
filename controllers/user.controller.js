@@ -37,7 +37,10 @@ exports.createUser = async (request, h) => {
     try {
         const { email, password, firstName, lastName } = request.payload;
 
-        
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return h.response({ message: "E-postadressen är redan registrerad" }).code(409);
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -48,10 +51,7 @@ exports.createUser = async (request, h) => {
             lastName
         });
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return h.response({ message: "E-postadressen är redan registrerad" }).code(409);
-        }
+        
 
 
         const savedUser = await user.save();
