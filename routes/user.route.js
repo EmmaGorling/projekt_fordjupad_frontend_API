@@ -29,22 +29,10 @@ module.exports = (server) => {
             auth: false,
             validate: {
                 payload: Joi.object({
-                    email: Joi.string().email().required().messages({
-                        "string.email": "Vänligen ange en giltig e-postadress",
-                        "string.empty": "E-post krävs"
-                    }),
-                    firstName: Joi.string().min(2).required().messages({
-                        "string-empty": "Förnamn krävs",
-                        "string.min": "Förnamn måste vara minst 2 tecken"
-                    }),
-                    lastName: Joi.string().min(2).required().messages({
-                        "string.empty": "Efternamn krävs",
-                        "string.min": "Efternamnet måste vara minst 2 tecken"
-                    }),
-                    password: Joi.string(6).required().messages({
-                        "string.empty": "Lösenord krävs",
-                        "string.min": "Lösenordet måste vara minst 6 tecken"
-                    })
+                    email: Joi.string().email().required(),
+                    firstName: Joi.string().min(2).required(),
+                    lastName: Joi.string().min(2).required(),
+                    password: Joi.string(6).required()
                 }),
                 failAction: (request, h, err) => {
                     return h.response({ message: err.details[0].message}).code(400).takeover();
