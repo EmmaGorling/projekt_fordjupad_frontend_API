@@ -9,7 +9,27 @@ module.exports = (server) => {
     server.route({
         method: 'POST',
         path: '/reviews',
-        handler: reviewController.createReview
+        handler: reviewController.createReview,
+        options: {
+            validate: {
+                payload: Joi.object({
+                    reviewText: Joi.string().min(1).required().messages({
+                        "string.empty": "Recensionstext krävs"
+                    }),
+                    rating: Joi.number().min(1).max(5).required().messages({
+                        "number.base": "Betyget måste vara ett nummer",
+                        "number.min": "Betyget måste vara minst 1",
+                        "number.max": "Betyget får vara högst 5"
+                    })
+                }),
+                failAction: (request, h, err) => {
+                    return h
+                        .response({ message: err.details[0].message })
+                        .code(400)
+                        .takeover();
+                }
+            }
+        }
     });
 
     // Get single review

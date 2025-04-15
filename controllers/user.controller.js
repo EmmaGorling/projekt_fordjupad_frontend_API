@@ -51,8 +51,6 @@ exports.createUser = async (request, h) => {
             lastName
         });
 
-        
-
 
         const savedUser = await user.save();
         return h.response({ message: "Kontot har lagts till!", user: savedUser}).code(200);

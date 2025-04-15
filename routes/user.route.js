@@ -45,7 +45,21 @@ module.exports = (server) => {
     server.route({
         method: 'PUT',
         path: '/users/{id}',
-        handler: userController.updateUser
+        handler: userController.updateUser,
+        options: {
+            auth: false,
+            validate: {
+                payload: Joi.object({
+                    email: Joi.string().email().required(),
+                    firstName: Joi.string().min(2).required(),
+                    lastName: Joi.string().min(2).required(),
+                    password: Joi.string().min(6).required()
+                }),
+                failAction: (request, h, err) => {
+                    return h.response({ message: err.details[0].message}).code(400).takeover();
+                }
+            }
+        }
     });
 
     // Delete
